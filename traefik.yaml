@@ -1,0 +1,26 @@
+entryPoints:
+  http:
+    address: ":80"
+  https:
+    address: ":443"
+
+providers:
+  http:
+    endpoint:
+      - "http://configurator:9000/api"
+    pollInterval: "1s"
+
+api:
+  dashboard: true
+  insecure: true
+
+log:
+  level: DEBUG
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: letsencrypt@aleph.im
+      storage: /letsencrypt/acme.json
+      httpChallenge:
+        entryPoint: http

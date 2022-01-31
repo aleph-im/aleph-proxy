@@ -1,0 +1,50 @@
+http:
+  routers:
+
+    to-aleph-api:
+      rule: "PathPrefix(`/api/`)"
+      service: aleph-api
+      tls:
+        certResolver: letsencrypt
+        domains:
+          - main: "lb1.aleph.cloud"
+            sans:
+              - "aleph.cloud"
+
+    to-aleph-vm:
+      rule: "PathPrefix(`/vm/`)"
+      service: aleph-vm
+      tls:
+        certResolver: letsencrypt
+        domains:
+          - main: "lb1.aleph.cloud"
+            sans:
+              - "aleph.cloud"
+
+  services:
+
+    aleph-api:
+      loadBalancer:
+        healthcheck:
+          path: /
+          interval: 10s
+          timeout: 10s
+        passHostHeader: false
+        servers:
+        - url: https://api1.aleph.im/api/
+        - url: https://api2.aleph.im/api/
+
+    aleph-vm:
+      loadBalancer:
+        healthcheck:
+          # fastapi demo path
+          path: /vm/67705389842a0a1b95eaa408b009741027964edc805997475e95c505d642edd8
+          interval: 10s
+          timeout: 10s
+        passHostHeader: false
+        servers:
+        - url: https://aleph.sh/vm/
+        - url: https://vm.demo.okeso.fr/vm/
+        sticky:
+          cookie:
+            name: aleph-proxy-sticky-session

@@ -1,0 +1,24 @@
+version: "3.3"
+
+services:
+  traefik:
+    restart: always
+    image: traefik:v2.6
+#    command:
+#      - --api.insecure=true
+    ports:
+      - "80:80/tcp"
+      - "443:443/tcp"
+      - "127.0.0.1:8080:8080/tcp"
+    volumes:
+      - ./traefik.yaml:/etc/traefik/traefik.yaml
+      - ./letsencrypt:/letsencrypt
+
+  configurator:
+    build:
+      context: ./aleph_proxy_config
+    ports:
+      - "9000:9000/tcp"
+    volumes:
+      - ./aleph_proxy_config/main.py:/opt/aleph_proxy_config/main.py
+      - ./aleph_proxy_config/config.yaml:/opt/aleph_proxy_config/config.yaml
