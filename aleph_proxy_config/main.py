@@ -34,6 +34,8 @@ def get_compute_resource_node_urls(aggr):
     for node in aggr['data']['corechannel']['resource_nodes']:
         addr = node['address'].strip("/")
         if addr:
+            if not addr.startswith("https://"):
+                addr = "https://" + addr
             yield addr + "/vm/"
 
 
