@@ -27,7 +27,7 @@ def get_api_node_urls(aggr):
         match = re.findall(r"/ip4/([\d\\.]+)/.*", multiaddress)
         if match:
             ip = match[0]
-            yield f"http://{ip}:4024/api/"
+            yield {"url": f"http://{ip}:4024/api/"}
 
 
 def get_compute_resource_node_urls(aggr):
@@ -36,7 +36,7 @@ def get_compute_resource_node_urls(aggr):
         if addr:
             if not addr.startswith("https://"):
                 addr = "https://" + addr
-            yield addr + "/vm/"
+            yield {"url": addr + "/vm/"}
 
 
 @app.get("/api")
