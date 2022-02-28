@@ -13,7 +13,7 @@ providers:
   http:
     endpoint:
       - "http://configurator:9000/api"
-    pollInterval: "1s"
+    pollInterval: "5s"
 
 api:
   dashboard: true

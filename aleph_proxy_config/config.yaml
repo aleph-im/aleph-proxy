@@ -37,8 +37,8 @@ http:
       loadBalancer:
         healthcheck:
           path: /
-          interval: 10s
-          timeout: 10s
+          interval: 60s
+          timeout: 2s
         passHostHeader: false
         servers:
         - url: https://api1.aleph.im/api/
@@ -49,7 +49,7 @@ http:
         healthcheck:
           # fastapi demo path
           path: /vm/67705389842a0a1b95eaa408b009741027964edc805997475e95c505d642edd8
-          interval: 10s
+          interval: 60s
           timeout: 10s
         passHostHeader: false
         servers:
