@@ -19,12 +19,8 @@ global_update_task: Optional[asyncio.Task] = None
 async def download_nodes():
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
-            print("Status:", response.status)
-            print("Content-type:", response.headers['content-type'])
-
+            response.raise_for_status()
             data = await response.json()
-            print("Body:", len(data))
-
             return data
 
 
