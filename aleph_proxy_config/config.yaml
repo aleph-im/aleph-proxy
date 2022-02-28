@@ -9,9 +9,7 @@ http:
       tls:
         certResolver: letsencrypt
         domains:
-          - main: "lb1.aleph.cloud"
-            sans:
-              - "aleph.cloud"
+          - main: "aleph.cloud"
 
     to-aleph-vm:
       rule: "PathPrefix(`/vm/`)"
@@ -21,9 +19,7 @@ http:
       tls:
         certResolver: letsencrypt
         domains:
-          - main: "lb1.aleph.cloud"
-            sans:
-              - "aleph.cloud"
+          - main: "aleph.cloud"
 
   middlewares:
     retry-if-no-reply:
