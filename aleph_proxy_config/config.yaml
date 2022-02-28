@@ -4,6 +4,8 @@ http:
     to-aleph-api:
       rule: "PathPrefix(`/api/`)"
       service: aleph-api
+      middlewares:
+        - retry-if-no-reply
       tls:
         certResolver: letsencrypt
         domains:
@@ -14,12 +16,20 @@ http:
     to-aleph-vm:
       rule: "PathPrefix(`/vm/`)"
       service: aleph-vm
+      middlewares:
+        - retry-if-no-reply
       tls:
         certResolver: letsencrypt
         domains:
           - main: "lb1.aleph.cloud"
             sans:
               - "aleph.cloud"
+
+  middlewares:
+    retry-if-no-reply:
+      retry:
+        attempts: 4
+        initialInterval: 5ms
 
   services:
 
