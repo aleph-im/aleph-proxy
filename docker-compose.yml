@@ -16,6 +16,7 @@ services:
       - ./letsencrypt:/letsencrypt
 
   configurator:
+    restart: always
     build:
       context: ./aleph_proxy_config
     ports:
