@@ -27,8 +27,9 @@ global_update_task: Optional[asyncio.Task] = None
 async def download_nodes():
     # Iterate over trusted hosts in case the first is unavailable
     for trusted_host in TRUSTED_HOSTS:
-        async with aiohttp.ClientSession(timeout=2) as session:
-            async with session.get(trusted_host + PATH) as response:
+        url = trusted_host + PATH
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(30)) as session:
+            async with session.get(url) as response:
                 response.raise_for_status()
                 data = await response.json()
                 return data
