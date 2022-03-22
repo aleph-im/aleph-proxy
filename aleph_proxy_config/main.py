@@ -1,14 +1,14 @@
 import asyncio
 import logging
 import re
-from typing import Optional
+from typing import Optional, Dict
 
 import aiohttp as aiohttp
 import yaml
 from fastapi import FastAPI
 
 logging.basicConfig(
-    level=logging.WARNING,
+    level=logging.INFO,
 )
 logger = logging.getLogger(__file__)
 
@@ -24,7 +24,7 @@ global_data = {}
 global_update_task: Optional[asyncio.Task] = None
 
 
-async def download_nodes():
+async def download_nodes() -> Dict:
     # Iterate over trusted hosts in case the first is unavailable
     for trusted_host in TRUSTED_HOSTS:
         url = trusted_host + PATH
@@ -54,7 +54,7 @@ async def keep_nodes_updated():
         logger.debug("Obtaining node data...")
         global_data = await download_nodes()
         logger.debug("Obtained node data.")
-        await asyncio.sleep(10)
+        await asyncio.sleep(30)
 
 
 def get_api_node_urls(aggr):
@@ -78,6 +78,8 @@ def get_compute_resource_node_urls(aggr):
 @app.get("/api")
 async def read_root():
     aggr = await asyncio.wait_for(get_global_nodes(), timeout=60)
+    if not aggr:
+        raise ValueError("Node data is missing")
 
     with open('config.yaml', 'r') as fd:
         config = yaml.safe_load(fd)
@@ -100,3 +102,14 @@ async def start_polling():
 async def stop_polling():
     global global_update_task
     global_update_task.cancel()
+
+
+def download_node_data():
+    "Download the node data outside of ASGI."
+    loop = asyncio.get_event_loop()
+    return loop.run_until_complete(download_nodes())
+
+
+if __name__ == '__main__':
+    global_data = download_node_data()
+    print(global_data)
