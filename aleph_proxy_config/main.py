@@ -23,6 +23,7 @@ PATH = "/api/v0/aggregates/0xa1B3bb7d2332383D96b7796B908fB7f7F3c2Be10.json?keys=
 global_data = {}
 global_update_task: Optional[asyncio.Task] = None
 
+
 async def download_nodes():
     # Iterate over trusted hosts in case the first is unavailable
     for trusted_host in TRUSTED_HOSTS:

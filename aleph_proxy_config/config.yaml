@@ -2,6 +2,7 @@ http:
   routers:
 
     to-aleph-api:
+      # Forward API calls to all available Core Channel Nodes in the network
       rule: "PathPrefix(`/api/`)"
       service: aleph-api
       middlewares:
@@ -11,7 +12,18 @@ http:
         domains:
           - main: "aleph.cloud"  # Change to the domain you are using
 
-    to-aleph-vm:
+    to-aleph-official-api:
+      #Forward API calls only to official Aleph.im API nodes
+      rule: "PathPrefix(`/api/`)"
+      service: aleph-official-api
+      middlewares:
+        - retry-if-no-reply
+      tls:
+        certResolver: letsencrypt
+        domains:
+          - main: "official.aleph.cloud"  # Change to the subdomain you are using
+
+    to-aleph-vm:  # Forward VM calls to all available Compute Resource Nodes in the network
       rule: "PathPrefix(`/vm/`)"
       service: aleph-vm
       middlewares:
@@ -40,9 +52,21 @@ http:
         - url: https://api1.aleph.im/api/
         - url: https://api2.aleph.im/api/
 
+    aleph-official-api:
+      loadBalancer:
+        healthcheck:
+          path: /
+          interval: 60s
+          timeout: 2s
+        passHostHeader: false
+        servers: # These are the final values, they are not updated
+          - url: https://api1.aleph.im/api/
+          - url: https://api2.aleph.im/api/
+
     aleph-vm:
       loadBalancer:
         healthcheck:
+          # Check the health of Compute Resource Nodes by calling the
           # fastapi demo path
           path: /vm/67705389842a0a1b95eaa408b009741027964edc805997475e95c505d642edd8
           interval: 60s
@@ -52,5 +76,7 @@ http:
         - url: https://aleph.sh/vm/
         - url: https://vm.demo.okeso.fr/vm/
         sticky:
+          # Clients receive a session cookie that allows them to call the same Compute Resource Node for
+          # all calls.
           cookie:
             name: aleph-proxy-sticky-session
