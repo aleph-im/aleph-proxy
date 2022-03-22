@@ -14,17 +14,23 @@ logger = logging.getLogger(__file__)
 
 app = FastAPI()
 
-url = "https://api1.aleph.im/api/v0/aggregates/0xa1B3bb7d2332383D96b7796B908fB7f7F3c2Be10.json?keys=corechannel&limit=50"
+TRUSTED_HOSTS = [
+    "https://api1.aleph.im",
+    "https://api2.aleph.im",
+]
+PATH = "/api/v0/aggregates/0xa1B3bb7d2332383D96b7796B908fB7f7F3c2Be10.json?keys=corechannel&limit=50"
 
 global_data = {}
 global_update_task: Optional[asyncio.Task] = None
 
 async def download_nodes():
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            response.raise_for_status()
-            data = await response.json()
-            return data
+    # Iterate over trusted hosts in case the first is unavailable
+    for trusted_host in TRUSTED_HOSTS:
+        async with aiohttp.ClientSession(timeout=2) as session:
+            async with session.get(trusted_host + PATH) as response:
+                response.raise_for_status()
+                data = await response.json()
+                return data
 
 
 async def get_global_nodes():
