@@ -9,7 +9,7 @@ http:
       tls:
         certResolver: letsencrypt
         domains:
-          - main: "aleph.cloud"
+          - main: "aleph.cloud"  # Change to the domain you are using
 
     to-aleph-vm:
       rule: "PathPrefix(`/vm/`)"
@@ -19,7 +19,7 @@ http:
       tls:
         certResolver: letsencrypt
         domains:
-          - main: "aleph.cloud"
+          - main: "aleph.cloud"  # Change to the domain you are using
 
   middlewares:
     retry-if-no-reply:
@@ -36,7 +36,7 @@ http:
           interval: 60s
           timeout: 2s
         passHostHeader: false
-        servers:
+        servers:  # These are the initial values, they will be updated from the list of nodes
         - url: https://api1.aleph.im/api/
         - url: https://api2.aleph.im/api/
 
@@ -48,7 +48,7 @@ http:
           interval: 60s
           timeout: 10s
         passHostHeader: false
-        servers:
+        servers:  # These are the initial values, they will be updated from the list of nodes
         - url: https://aleph.sh/vm/
         - url: https://vm.demo.okeso.fr/vm/
         sticky:
