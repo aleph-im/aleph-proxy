@@ -4,13 +4,10 @@ services:
   traefik:
     restart: always
     image: traefik:v2.6
-#    command:
-#      - --api.insecure=true
     ports:
       - "80:80/tcp"
       - "443:443/tcp"
-#      - "127.0.0.1:8080:8080/tcp"
-      - "172.17.0.1:8080:8080/tcp"
+      - "172.17.0.1:8080:8080/tcp"  # Expose the internal dashboard on a private IP.
     volumes:
       - ./traefik.yaml:/etc/traefik/traefik.yaml
       - ./letsencrypt:/letsencrypt
