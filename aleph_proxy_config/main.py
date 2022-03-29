@@ -6,6 +6,7 @@ from typing import Optional, Dict
 import aiohttp as aiohttp
 import sentry_sdk
 import yaml
+from aiohttp import ClientResponseError
 from fastapi import FastAPI
 
 logging.basicConfig(
@@ -27,13 +28,23 @@ global_update_task: Optional[asyncio.Task] = None
 
 async def download_nodes() -> Dict:
     # Iterate over trusted hosts in case the first is unavailable
+    last_error = None
     for trusted_host in TRUSTED_HOSTS:
         url = trusted_host + PATH
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(30)) as session:
-            async with session.get(url) as response:
-                response.raise_for_status()
-                data = await response.json()
-                return data
+        try:
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(30)) as session:
+                async with session.get(url) as response:
+                    response.raise_for_status()
+                    data = await response.json()
+                    return data
+        except ClientResponseError as error:
+            logger.warning(f"Error downloading nodes from {trusted_host}")
+            last_error = error
+            continue
+
+    # Failed for all trusted hosts
+    assert last_error is not None, "The last error should be defined"
+    raise last_error
 
 
 async def get_global_nodes():
