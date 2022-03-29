@@ -4,6 +4,7 @@ import re
 from typing import Optional, Dict
 
 import aiohttp as aiohttp
+import sentry_sdk
 import yaml
 from fastapi import FastAPI
 
@@ -89,6 +90,12 @@ async def read_root():
     config['http']['services']['aleph-api']['loadBalancer']['servers'] = api_urls
     config['http']['services']['aleph-vm']['loadBalancer']['servers'] = vm_urls
     return config
+
+
+@app.on_event("startup")
+async def setup_sentry():
+    sentry_sdk.init()
+    # Environment variable SENTRY_DSN is read automatically by sentry_sdk
 
 
 @app.on_event("startup")
