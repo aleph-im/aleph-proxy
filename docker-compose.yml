@@ -16,6 +16,8 @@ services:
     restart: always
     build:
       context: ./aleph_proxy_config
+    environment:
+      SENTRY_SDK: ""
     ports:
       - "9000:9000/tcp"
     volumes:
