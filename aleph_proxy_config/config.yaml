@@ -1,6 +1,26 @@
 http:
   routers:
 
+    to-homepage:
+      rule: "Path(`/`)"
+      service: aleph-proxy-homepage
+      middlewares:
+        - do-not-add-headers
+      tls:
+        certResolver: letsencrypt
+        domains:
+          - main: "aleph.cloud"  # Change to the domain you are using
+
+    to-homepage-official:
+      rule: "Path(`/`)"
+      service: aleph-proxy-homepage
+      middlewares:
+        - do-not-add-headers
+      tls:
+        certResolver: letsencrypt
+        domains:
+          - main: "official.aleph.cloud"  # Change to the domain you are using
+
     to-aleph-api:
       # Forward API calls to all available Core Channel Nodes in the network
       rule: "PathPrefix(`/api/`)"
@@ -39,7 +59,22 @@ http:
         attempts: 4
         initialInterval: 5ms
 
+    do-not-add-headers:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Host: "aleph-proxy-homepage.aleph.cloud"
+          X-Forwarded-Port: ""
+          X-Forwarded-Proto: ""
+          X-Forwarded-Server: ""
+          X-Real-Ip: ""
+
   services:
+
+    aleph-proxy-homepage:
+      loadBalancer:
+        passHostHeader: false
+        servers:
+          - url: http://aleph-proxy-homepage.aleph.cloud/  # Static page on IPFS, via Cloudflare
 
     aleph-api:
       loadBalancer:
