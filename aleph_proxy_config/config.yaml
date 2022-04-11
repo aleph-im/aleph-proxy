@@ -23,7 +23,7 @@ http:
 
     to-aleph-api:
       # Forward API calls to all available Core Channel Nodes in the network
-      rule: "PathPrefix(`/api/`)"
+      rule: "(Host(`aleph.cloud`) || HostRegexp(`{subdomain:lb[0-9]+}.aleph.cloud`)) && PathPrefix(`/api/`)"
       service: aleph-api
       middlewares:
         - retry-if-no-reply
@@ -34,7 +34,7 @@ http:
 
     to-aleph-official-api:
       #Forward API calls only to official Aleph.im API nodes
-      rule: "PathPrefix(`/api/`)"
+      rule: "Host(`official.aleph.cloud`) && PathPrefix(`/api/`)"
       service: aleph-official-api
       middlewares:
         - retry-if-no-reply
