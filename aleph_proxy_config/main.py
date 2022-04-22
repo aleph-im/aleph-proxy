@@ -2,6 +2,7 @@ import asyncio
 import logging
 import re
 from typing import Optional, Dict
+from socket import getaddrinfo
 
 import aiohttp as aiohttp
 import sentry_sdk
@@ -84,7 +85,13 @@ def get_compute_resource_node_urls(aggr):
         if addr:
             if not addr.startswith("https://"):
                 addr = "https://" + addr
-            yield {"url": addr + "/vm/"}
+
+            domain = re.compile(r"https?://(www\.)?").sub('', addr.lower()).strip().strip('/')
+            try:
+                result = getaddrinfo(domain, None)
+                yield {"url": addr + "/vm/"}
+            except:
+                print(domain, "is not a valid domain")
 
 
 @app.get("/api")
