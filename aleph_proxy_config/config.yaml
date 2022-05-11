@@ -53,6 +53,16 @@ http:
         domains:
           - main: "aleph.cloud"  # Change to the domain you are using
 
+    to-aleph-official-vm:  # Forward VM calls to official Aleph.im API nodes
+      rule: "Host(`official.aleph.cloud`) && PathPrefix(`/vm/`)"
+      service: aleph-official-vm
+      middlewares:
+        - retry-if-no-reply
+      tls:
+        certResolver: letsencrypt
+        domains:
+          - main: "official.aleph.cloud"  # Change to the domain you are using
+
   middlewares:
     retry-if-no-reply:
       retry:
@@ -110,6 +120,24 @@ http:
         servers:  # These are the initial values, they will be updated from the list of nodes
         - url: https://aleph.sh/vm/
         - url: https://vm.demo.okeso.fr/vm/
+        sticky:
+          # Clients receive a session cookie that allows them to call the same Compute Resource Node for
+          # all calls.
+          cookie:
+            name: aleph-proxy-sticky-session
+
+    aleph-official-vm:
+      loadBalancer:
+        healthcheck:
+          # Check the health of Compute Resource Nodes by calling the
+          # fastapi demo path
+          path: /vm/67705389842a0a1b95eaa408b009741027964edc805997475e95c505d642edd8
+          interval: 60s
+          timeout: 10s
+        passHostHeader: false
+        servers: # These are the final values, they are not updated
+          - url: https://aleph.sh/vm/
+          - url: https://vm.demo.okeso.fr/vm/
         sticky:
           # Clients receive a session cookie that allows them to call the same Compute Resource Node for
           # all calls.
