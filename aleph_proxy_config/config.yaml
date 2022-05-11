@@ -24,6 +24,7 @@ http:
     to-aleph-api:
       # Forward API calls to all available Core Channel Nodes in the network
       rule: "(Host(`aleph.cloud`) || HostRegexp(`{subdomain:lb[0-9]+}.aleph.cloud`)) && PathPrefix(`/api/`)"
+      priority: 1
       service: aleph-api
       middlewares:
         - retry-if-no-reply
@@ -33,8 +34,9 @@ http:
           - main: "aleph.cloud"  # Change to the domain you are using
 
     to-aleph-official-api:
-      #Forward API calls only to official Aleph.im API nodes
+      # Forward API calls only to official Aleph.im API nodes
       rule: "Host(`official.aleph.cloud`) && PathPrefix(`/api/`)"
+      priority: 2  # Priority over `to-aleph-api`
       service: aleph-official-api
       middlewares:
         - retry-if-no-reply
@@ -44,7 +46,8 @@ http:
           - main: "official.aleph.cloud"  # Change to the subdomain you are using
 
     to-aleph-vm:  # Forward VM calls to all available Compute Resource Nodes in the network
-      rule: "PathPrefix(`/vm/`)"
+      rule: "(Host(`aleph.cloud`) || HostRegexp(`{subdomain:lb[0-9]+}.aleph.cloud`)) && PathPrefix(`/vm/`)"
+      priority: 1
       service: aleph-vm
       middlewares:
         - retry-if-no-reply
@@ -55,6 +58,7 @@ http:
 
     to-aleph-official-vm:  # Forward VM calls to official Aleph.im API nodes
       rule: "Host(`official.aleph.cloud`) && PathPrefix(`/vm/`)"
+      priority: 2  # Priority over `to-aleph-api`
       service: aleph-official-vm
       middlewares:
         - retry-if-no-reply
