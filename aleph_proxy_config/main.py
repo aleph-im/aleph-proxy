@@ -143,7 +143,7 @@ async def read_root():
     return config
 
 @app.get("/api/by_instance_type/{instance_type}")
-async def read_curated_root(instance_type):
+async def read_instance_type(instance_type):
     with open(f'config_{instance_type}.yaml', 'r') as fd:
         config = yaml.safe_load(fd)
 
