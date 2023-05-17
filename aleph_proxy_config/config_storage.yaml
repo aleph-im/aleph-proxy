@@ -1,0 +1,129 @@
+http:
+  routers:
+    to-aleph-vm-storage-small:  # Forward VM calls to all available Compute Resource Nodes in the network with storage less than 1TB
+      rule: "PathPrefix(`/vm-storage-small/`)"
+      service: aleph-vm-storage-small
+      middlewares:
+        - retry-if-no-reply
+      tls:
+        certResolver: letsencrypt
+        domains:
+          - main: "aleph.cloud"  # Change to the domain you are using
+
+    to-aleph-vm-storage-medium:  # Forward VM calls to all available Compute Resource Nodes in the network with storage between 1TB and 2TB
+      rule: "PathPrefix(`/vm-storage-medium/`)"
+      service: aleph-vm-storage-medium
+      middlewares:
+        - retry-if-no-reply
+      tls:
+        certResolver: letsencrypt
+        domains:
+          - main: "aleph.cloud"  # Change to the domain you are using
+
+    to-aleph-vm-storage-large:  # Forward VM calls to all available Compute Resource Nodes in the network with storage between 2TB and 4TB
+      rule: "PathPrefix(`/vm-storage-large/`)"
+      service: aleph-vm-storage-large
+      middlewares:
+        - retry-if-no-reply
+      tls:
+        certResolver: letsencrypt
+        domains:
+          - main: "aleph.cloud"  # Change to the domain you are using
+
+    to-aleph-vm-storage-xlarge:  # Forward VM calls to all available Storage Resource Nodes in the network with storage more than 4TB
+      rule: "PathPrefix(`/vm-storage-xlarge/`)"
+      service: aleph-vm-storage-xlarge
+      middlewares:
+        - retry-if-no-reply
+      tls:
+        certResolver: letsencrypt
+        domains:
+          - main: "aleph.cloud"  # Change to the domain you are using
+
+  middlewares:
+    retry-if-no-reply:
+      retry:
+        attempts: 4
+        initialInterval: 5ms
+
+    do-not-add-headers:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Host: "aleph-proxy-homepage.aleph.cloud"
+          X-Forwarded-Port: ""
+          X-Forwarded-Proto: ""
+          X-Forwarded-Server: ""
+          X-Real-Ip: ""
+
+  services:
+    aleph-vm-storage-small:
+      loadBalancer:
+        healthcheck:
+          # Check the health of Storage Resource Nodes by calling the
+          # fastapi demo path
+          path: /vm/67705389842a0a1b95eaa408b009741027964edc805997475e95c505d642edd8
+          interval: 60s
+          timeout: 10s
+        passHostHeader: false
+        servers:  # These are the initial values, they will be updated from the list of nodes
+        - url: https://aleph.sh/vm/
+        - url: https://vm.demo.okeso.fr/vm/
+        sticky:
+          # Clients receive a session cookie that allows them to call the same Storage Resource Node for
+          # all calls.
+          cookie:
+            name: aleph-proxy-storage-sticky-session
+
+    aleph-vm-storage-medium:
+      loadBalancer:
+        healthcheck:
+          # Check the health of Storage Resource Nodes by calling the
+          # fastapi demo path
+          path: /vm/67705389842a0a1b95eaa408b009741027964edc805997475e95c505d642edd8
+          interval: 60s
+          timeout: 10s
+        passHostHeader: false
+        servers:  # These are the initial values, they will be updated from the list of nodes
+        - url: https://aleph.sh/vm/
+        - url: https://vm.demo.okeso.fr/vm/
+        sticky:
+          # Clients receive a session cookie that allows them to call the same Storage Resource Node for
+          # all calls.
+          cookie:
+            name: aleph-proxy-storage-sticky-session
+
+    aleph-vm-storage-large:
+      loadBalancer:
+        healthcheck:
+          # Check the health of Storage Resource Nodes by calling the
+          # fastapi demo path
+          path: /vm/67705389842a0a1b95eaa408b009741027964edc805997475e95c505d642edd8
+          interval: 60s
+          timeout: 10s
+        passHostHeader: false
+        servers:  # These are the initial values, they will be updated from the list of nodes
+        - url: https://aleph.sh/vm/
+        - url: https://vm.demo.okeso.fr/vm/
+        sticky:
+          # Clients receive a session cookie that allows them to call the same Storage Resource Node for
+          # all calls.
+          cookie:
+            name: aleph-proxy-storage-sticky-session
+
+    aleph-vm-storage-xlarge:
+      loadBalancer:
+        healthcheck:
+          # Check the health of Storage Resource Nodes by calling the
+          # fastapi demo path
+          path: /vm/67705389842a0a1b95eaa408b009741027964edc805997475e95c505d642edd8
+          interval: 60s
+          timeout: 10s
+        passHostHeader: false
+        servers:  # These are the initial values, they will be updated from the list of nodes
+        - url: https://aleph.sh/vm/
+        - url: https://vm.demo.okeso.fr/vm/
+        sticky:
+          # Clients receive a session cookie that allows them to call the same Storage Resource Node for
+          # all calls.
+          cookie:
+            name: aleph-proxy-storage-sticky-session
