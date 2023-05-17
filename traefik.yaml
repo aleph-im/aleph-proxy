@@ -13,6 +13,9 @@ providers:
   http:
     endpoint:
       - "http://configurator:9000/api"
+      - "http://configurator:9000/api/by_instance_type/compute"
+      - "http://configurator:9000/api/by_instance_type/memory"
+      - "http://configurator:9000/api/by_instance_type/storage"
     pollInterval: "5s"
 
 api:
