@@ -80,10 +80,11 @@ async def keep_nodes_system_info_updated():
 async def update_system_info_nodes():
     """Asyncio task that updates the aleph nodes system info regularly"""
     global global_system_info_data
+    global_system_info_data = []
     aggr = await asyncio.wait_for(get_global_nodes(), timeout=60)
     if not aggr:
         raise ValueError("Node data is missing")
-    
+
     for node in aggr['data']['corechannel']['resource_nodes']:
         addr = node['address'].strip("/")
         if not addr:
@@ -167,9 +168,9 @@ async def read_instance_type(instance_type):
                 vm_s.append(vm_url)
             elif 8 < cpu <= 16 or (cpu > 8 and 16 >= ram < 32):
                 vm_m.append(vm_url)
-            elif 16 <= cpu <= 32 or (cpu > 12 and 16 > ram <=32):
+            elif 16 <= cpu < 32 or (cpu > 12 and 16 > ram <=64):
                 vm_l.append(vm_url)
-            elif cpu >= 32 or (cpu > 16 and ram > 32):
+            elif cpu >= 32 or (cpu > 16 and ram > 64):
                 vm_xl.append(vm_url)
             else:
                 logger.warning(f"Config does not match any criteria ({vm_url})")
