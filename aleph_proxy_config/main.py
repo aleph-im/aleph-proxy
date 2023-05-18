@@ -178,21 +178,21 @@ async def read_instance_type(instance_type):
         elif instance_type == 'storage':
             if storage <= 1:
                 vm_s.append(vm_url)
-            if storage > 1 and storage <= 2:
+            elif storage > 1 and storage <= 2:
                 vm_m.append(vm_url)
-            if storage > 2 and storage <= 4:
+            elif storage > 2 and storage <= 4:
                 vm_l.append(vm_url)
-            if storage > 4:
+            elif storage > 4:
                 vm_xl.append(vm_url)
 
         elif instance_type == 'memory':
-            if storage <= 16:
+            if ram <= 16:
                 vm_s.append(vm_url)
-            if storage > 16 and storage <= 32:
+            elif ram > 16 and ram <= 32:
                 vm_m.append(vm_url)
-            if storage > 32 and storage <= 128:
+            elif ram > 32 and ram <= 128:
                 vm_l.append(vm_url)
-            if storage > 128:
+            elif ram > 128:
                 vm_xl.append(vm_url)
 
     if len(vm_s) > 0:
