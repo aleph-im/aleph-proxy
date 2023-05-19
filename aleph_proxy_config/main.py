@@ -188,11 +188,11 @@ async def read_instance_type(instance_type):
         elif instance_type == 'memory':
             if ram <= 16:
                 vm_s.append(vm_url)
-            elif ram > 16 and ram <= 32:
+            elif ram > 16 and ram <= 33:
                 vm_m.append(vm_url)
-            elif ram > 32 and ram <= 128:
+            elif ram > 33 and ram <= 129:
                 vm_l.append(vm_url)
-            elif ram > 128:
+            elif ram > 129:
                 vm_xl.append(vm_url)
 
     if len(vm_s) > 0:
