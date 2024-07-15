@@ -23,16 +23,41 @@ TRUSTED_HOSTS = [
 ]
 PATH = "/api/v0/aggregates/0xa1B3bb7d2332383D96b7796B908fB7f7F3c2Be10.json?keys=corechannel&limit=50"
 
+CURATED_PATH="/api/v0/posts.json?types=aleph-network-benchmarks&pagination=1&page=1&addresses=0x4D52380D3191274a04846c89c069E6C3F2Ed94e4"
+
 global_data = {}
 global_system_info_data = []
+global_sysbench_info_data = []
 global_update_task: Optional[asyncio.Task] = None
 global_update_sysinfo_task: Optional[asyncio.Task] = None
+global_update_sysbench_task: Optional[asyncio.Task] = None
 
 async def download_nodes() -> Dict:
     # Iterate over trusted hosts in case the first is unavailable
     last_error = None
     for trusted_host in TRUSTED_HOSTS:
         url = trusted_host + PATH
+        try:
+
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(30)) as session:
+                async with session.get(url) as response:
+                    response.raise_for_status()
+                    data = await response.json()
+                    return data
+        except ClientResponseError as error:
+            logger.warning(f"Error downloading nodes from {trusted_host}")
+            last_error = error
+            continue
+
+    # Failed for all trusted hosts
+    assert last_error is not None, "The last error should be defined"
+    raise last_error
+
+async def download_nodes_from_benchmark() -> Dict:
+    # Iterate over trusted hosts in case the first is unavailable
+    last_error = None
+    for trusted_host in TRUSTED_HOSTS:
+        url = trusted_host + CURATED_PATH
         try:
             async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(30)) as session:
                 async with session.get(url) as response:
@@ -70,6 +95,7 @@ async def keep_nodes_updated():
         logger.debug("Obtained node data.")
         await asyncio.sleep(30)
 
+
 async def keep_nodes_system_info_updated():
     """Asyncio task that updates the aleph nodes regularly"""
     while True:
@@ -77,6 +103,16 @@ async def keep_nodes_system_info_updated():
         await update_system_info_nodes()
         logger.debug("Obtained node system info data.")
         await asyncio.sleep(30)
+
+
+async def keep_nodes_sysbench_info_updated():
+    """Asyncio task that updates the aleph nodes regularly"""
+    while True:
+        logger.debug("Obtaining nodes sysbench info data...")
+        await update_sysbench_info_nodes()
+        logger.debug("Obtained node sysbench info data.")
+        await asyncio.sleep(30)
+
 
 async def update_system_info_nodes():
     """Asyncio task that updates the aleph nodes system info regularly"""
@@ -91,6 +127,7 @@ async def update_system_info_nodes():
         if not addr:
             continue
 
+        node_id = node['hash']
         if addr:
             if not addr.startswith("https://"):
                 addr = "https://" + addr
@@ -105,6 +142,7 @@ async def update_system_info_nodes():
                     if data is None or "cpu" not in data:
                         continue
                     global_system_info_data.append({
+                        "node_id": node_id,
                         "url": addr + "/vm/",
                         "system_info": data
                     })
@@ -112,6 +150,35 @@ async def update_system_info_nodes():
             logger.warning(f"Error loading system info for node {url}")
             logger.error(error)
             continue
+
+
+def get_node_by_id(node_id):
+    global global_system_info_data
+    for node in global_system_info_data:
+        if node["node_id"] == node_id:
+            return node
+    return None
+
+
+async def update_sysbench_info_nodes():
+    """Asyncio task that updates the aleph nodes system info regularly"""
+    global global_system_info_data
+    global global_sysbench_info_data
+    nodes = await asyncio.wait_for(download_nodes_from_benchmark(), timeout=60)
+
+    if not nodes:
+        raise ValueError("Node data is missing")
+
+    global_sysbench_info_data = []
+    for node in nodes['posts'][0]['content']['benchmarks']['crn']:
+        node_info = get_node_by_id(node['node_id'])
+        if not node_info or "cpu" not in node:
+            continue
+
+        node['url'] = node_info['url']
+        node['system_info'] = node_info['system_info']
+
+        global_sysbench_info_data.append(node)
 
 
 def get_api_node_urls(aggr):
@@ -150,17 +217,17 @@ async def read_root():
 
 @app.get("/api/by_instance_type/{instance_type}")
 async def read_instance_type(instance_type):
+    global global_sysbench_info_data
     with open(f'config_{instance_type}.yaml', 'r') as fd:
         config = yaml.safe_load(fd)
 
-    global global_system_info_data
-
+    vm_g = []
     vm_s = []
     vm_m = []
     vm_l = []
     vm_xl = []
 
-    for vm in global_system_info_data:
+    for vm in global_sysbench_info_data:
         vm_url = vm["url"]
         crn_info = vm["system_info"]
         cpu = crn_info["cpu"]["count"]
@@ -169,6 +236,9 @@ async def read_instance_type(instance_type):
         print(vm_url, "CPU: ", cpu, " RAM: ", ram, " DISK: ", storage)
 
         if instance_type == 'compute':
+            if cpu >= 16 and ram >= 32:
+                vm_g.append(vm_url)
+
             if cpu <= 8 or (cpu < 24 and ram <= 16):
                 vm_s.append(vm_url)
             elif 8 < cpu <= 16 or (cpu > 8 and 16 >= ram < 32):
@@ -179,7 +249,7 @@ async def read_instance_type(instance_type):
                 vm_xl.append(vm_url)
             else:
                 logger.warning(f"Config does not match any criteria ({vm_url})")
-                print(vm)
+                logger.info(vm)
         elif instance_type == 'storage':
             if storage <= 1:
                 vm_s.append(vm_url)
@@ -200,6 +270,8 @@ async def read_instance_type(instance_type):
             elif ram > 129:
                 vm_xl.append(vm_url)
 
+    if len(vm_g) > 0:
+        config['http']['services'][f'aleph-vm-{instance_type}-general']['loadBalancer']['servers'] = vm_g
     if len(vm_s) > 0:
         config['http']['services'][f'aleph-vm-{instance_type}-small']['loadBalancer']['servers'] = vm_s
     if len(vm_m) > 0:
@@ -222,17 +294,21 @@ async def setup_sentry():
 async def start_polling():
     global global_update_task
     global global_update_sysinfo_task
+    global global_update_sysbench_task
     loop = asyncio.get_event_loop()
     global_update_task = loop.create_task(keep_nodes_updated())
     global_update_sysinfo_task = loop.create_task(keep_nodes_system_info_updated())
+    global_update_sysbench_task = loop.create_task(keep_nodes_sysbench_info_updated())
 
 
 @app.on_event("shutdown")
 async def stop_polling():
     global global_update_task
     global global_update_sysinfo_task
+    global global_update_sysbench_task
     global_update_task.cancel()
     global_update_sysinfo_task.cancel()
+    global_update_sysbench_task.cancel()
 
 
 def download_node_data():

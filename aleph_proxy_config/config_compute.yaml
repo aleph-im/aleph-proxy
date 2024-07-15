@@ -1,5 +1,15 @@
 http:
   routers:
+    to-aleph-vm-compute-general:  # Forward VM calls to all available Compute Resource Nodes in the network with CPU < 8 and or CPU < 24 and RAM < 16
+      rule: "PathPrefix(`/vm/`)"
+      service: aleph-vm-compute-general
+      middlewares:
+        - retry-if-no-reply
+      tls:
+        certResolver: letsencrypt
+        domains:
+          - main: "aleph.sh"  # Change to the domain you are using
+
     to-aleph-vm-compute-s:  # Forward VM calls to all available Compute Resource Nodes in the network with CPU < 8 and or CPU < 24 and RAM < 16
       rule: "PathPrefix(`/vm-compute-small/`)"
       service: aleph-vm-compute-small
@@ -8,7 +18,7 @@ http:
       tls:
         certResolver: letsencrypt
         domains:
-          - main: "aleph.cloud"  # Change to the domain you are using
+          - main: "aleph.sh"  # Change to the domain you are using
 
     to-aleph-vm-compute-m:  # Forward VM calls to all available Compute Resource Nodes in the network with CPU in [8..16] or CPU > 8 and RAM in [16..<32]
       rule: "PathPrefix(`/vm-compute-medium/`)"
@@ -18,7 +28,7 @@ http:
       tls:
         certResolver: letsencrypt
         domains:
-          - main: "aleph.cloud"  # Change to the domain you are using
+          - main: "aleph.sh"  # Change to the domain you are using
 
     to-aleph-vm-compute-l:  # Forward VM calls to all available Compute Resource Nodes in the network with CPU in [16..32] or CPU > 12 and RAM in [16>..32] 
       rule: "PathPrefix(`/vm-compute-large/`)"
@@ -28,7 +38,7 @@ http:
       tls:
         certResolver: letsencrypt
         domains:
-          - main: "aleph.cloud"  # Change to the domain you are using
+          - main: "aleph.sh"  # Change to the domain you are using
 
     to-aleph-vm-compute-xl:  # Forward VM calls to all available Compute Resource Nodes in the network with CPU >= 32 or CPU > 16 and RAM > 32
       rule: "PathPrefix(`/vm-compute-xlarge/`)"
@@ -38,7 +48,7 @@ http:
       tls:
         certResolver: letsencrypt
         domains:
-          - main: "aleph.cloud"  # Change to the domain you are using
+          - main: "aleph.sh"  # Change to the domain you are using
 
 
   middlewares:
@@ -57,6 +67,23 @@ http:
           X-Real-Ip: ""
 
   services:
+    aleph-vm-compute-general:
+      loadBalancer:
+        healthcheck:
+          # Check the health of Compute Resource Nodes by calling the
+          # fastapi demo path
+          path: /vm/67705389842a0a1b95eaa408b009741027964edc805997475e95c505d642edd8
+          interval: 60s
+          timeout: 10s
+        passHostHeader: false
+        servers:  # These are the initial values, they will be updated from the list of nodes
+        - url: https://crn1.aleph.sh/vm/
+        sticky:
+          # Clients receive a session cookie that allows them to call the same Compute Resource Node for
+          # all calls.
+          cookie:
+            name: aleph-proxy-compute-sticky-session
+            
     aleph-vm-compute-small:
       loadBalancer:
         healthcheck:
@@ -67,8 +94,7 @@ http:
           timeout: 10s
         passHostHeader: false
         servers:  # These are the initial values, they will be updated from the list of nodes
-        - url: https://aleph.sh/vm/
-        - url: https://vm.demo.okeso.fr/vm/
+        - url: https://crn1.aleph.sh/vm/
         sticky:
           # Clients receive a session cookie that allows them to call the same Compute Resource Node for
           # all calls.
@@ -85,8 +111,7 @@ http:
           timeout: 10s
         passHostHeader: false
         servers:  # These are the initial values, they will be updated from the list of nodes
-        - url: https://aleph.sh/vm/
-        - url: https://vm.demo.okeso.fr/vm/
+        - url: https://crn1.aleph.sh/vm/
         sticky:
           # Clients receive a session cookie that allows them to call the same Compute Resource Node for
           # all calls.
@@ -103,8 +128,7 @@ http:
           timeout: 10s
         passHostHeader: false
         servers:  # These are the initial values, they will be updated from the list of nodes
-        - url: https://aleph.sh/vm/
-        - url: https://vm.demo.okeso.fr/vm/
+        - url: https://crn1.aleph.sh/vm/
         sticky:
           # Clients receive a session cookie that allows them to call the same Compute Resource Node for
           # all calls.
@@ -121,8 +145,7 @@ http:
           timeout: 10s
         passHostHeader: false
         servers:  # These are the initial values, they will be updated from the list of nodes
-        - url: https://aleph.sh/vm/
-        - url: https://vm.demo.okeso.fr/vm/
+        - url: https://crn1.aleph.sh/vm/
         sticky:
           # Clients receive a session cookie that allows them to call the same Compute Resource Node for
           # all calls.
